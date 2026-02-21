@@ -738,6 +738,12 @@ function render() {
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 searchEl.addEventListener('input', () => { selIdx = -1; render(); });
 
+searchEl.addEventListener('blur', () => {
+  searchEl.value = '';
+  selIdx = -1;
+  render();
+});
+
 searchEl.addEventListener('keydown', e => {
   const tasks = filtered();
   const q     = query();
@@ -760,11 +766,6 @@ searchEl.addEventListener('keydown', e => {
       expanded.has(task.id) ? expanded.delete(task.id) : expanded.add(task.id);
       render();
     }
-
-  } else if (e.key === 'Escape') {
-    searchEl.value = '';
-    selIdx = -1;
-    render();
 
   } else if (e.key === 'Enter') {
     e.preventDefault();
@@ -813,6 +814,22 @@ listEl.addEventListener('click', e => {
     const row  = main.closest('.task-row');
     const task = data.tasks.find(t => t.id === row?.dataset.id);
     if (task) startTask(task);
+  }
+});
+
+// ── Escape (document-level so it works regardless of focus) ───────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (searchEl.value) {
+    searchEl.blur(); // blur handler clears text and resets state
+  } else {
+    const cur = runningTask();
+    if (cur) {
+      cur.sessions.find(s => !s.end).end = Date.now();
+      persist();
+      render();
+    }
+    searchEl.blur();
   }
 });
 
