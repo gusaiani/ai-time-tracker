@@ -476,7 +476,7 @@ body {
 }
 
 .day-tasks {
-  padding: 2px 0 10px 30px;
+  padding: 2px 0 10px 22px;
 }
 
 .day-task-row {
@@ -484,7 +484,7 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 3px 20px 3px 0;
+  padding: 3px 60px 3px 0;
   font-size: 13px;
   color: var(--dimmer);
   cursor: pointer;
