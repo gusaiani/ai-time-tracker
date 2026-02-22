@@ -600,8 +600,13 @@ listEl.addEventListener('click', e => {
   }
 });
 
-// ── Escape (document-level so it works regardless of focus) ───────────────────
+// ── Global shortcuts ──────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  if (e.key === 'n' && document.activeElement === document.body) {
+    e.preventDefault();
+    searchEl.focus();
+    return;
+  }
   if (e.key !== 'Escape') return;
   if (searchEl.value) {
     searchEl.blur(); // blur handler clears text and resets state
