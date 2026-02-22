@@ -416,6 +416,97 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── History ── */
+#history {
+  margin-top: 8px;
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 20px 8px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.day-chevron {
+  font-size: 9px;
+  color: var(--border);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.day-row:hover .day-chevron { color: var(--dimmer); }
+
+.day-label { flex: 1; }
+
+.day-name {
+  font-size: 13px;
+  color: var(--dimmer);
+}
+
+.day-date {
+  font-size: 12px;
+  color: var(--border);
+  margin-left: 6px;
+}
+
+.day-row:hover .day-name { color: var(--dim); }
+.day-row:hover .day-date { color: var(--dimmer); }
+
+.day-total {
+  font-size: 13px;
+  color: var(--dimmer);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.day-tasks {
+  padding: 2px 0 10px 30px;
+}
+
+.day-task-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 3px 20px 3px 0;
+  font-size: 13px;
+  color: var(--dimmer);
+}
+
+.dt-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dt-time {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.dt-del {
+  position: absolute;
+  right: 0;
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--red);
+  font-family: var(--font);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 0.1s;
+  line-height: 1;
+}
+.day-task-row:hover .dt-del { opacity: 1; }
+.dt-del:hover { filter: brightness(1.3); }
+
 /* ── Share footer ── */
 .share-footer {
   position: fixed;

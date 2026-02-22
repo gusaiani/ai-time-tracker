@@ -212,7 +212,8 @@ function liveUpdate() {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let selIdx  = -1;
-const expanded = new Set();
+const expanded     = new Set();
+const expandedDays = new Set();
 
 const searchEl   = document.getElementById('search');
 const listEl     = document.getElementById('task-list');
@@ -220,6 +221,7 @@ const totalRow   = document.getElementById('total-row');
 const totalTime  = document.getElementById('total-time');
 const hdRunning  = document.getElementById('hd-running');
 const hdDate     = document.getElementById('hd-date');
+const historyEl  = document.getElementById('history');
 
 hdDate.textContent = new Date().toLocaleDateString('en-US', {
   weekday: 'short', month: 'short', day: 'numeric'
@@ -230,9 +232,101 @@ function queryLC() { return query().toLowerCase(); }
 
 function filtered() {
   const q = queryLC();
-  if (!q) return [...data.tasks];
+  if (!q) return data.tasks.filter(t => taskTodayMs(t) > 0 || t.sessions.some(s => !s.end));
   return data.tasks.filter(t => t.name.toLowerCase().includes(q));
 }
+
+// ── History helpers ────────────────────────────────────────────────────────────
+function weekPastDays() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  const days = [];
+  const d = new Date(monday);
+  while (d < today) {
+    days.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() + 1);
+  }
+  return days.reverse();
+}
+
+function dayTotalMs(dateStr) {
+  return data.tasks.reduce((total, t) =>
+    total + t.sessions
+      .filter(s => s.end && new Date(s.start).toISOString().slice(0, 10) === dateStr)
+      .reduce((a, s) => a + (s.end - s.start), 0)
+  , 0);
+}
+
+function tasksForDay(dateStr) {
+  return data.tasks
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      ms: t.sessions
+        .filter(s => s.end && new Date(s.start).toISOString().slice(0, 10) === dateStr)
+        .reduce((a, s) => a + (s.end - s.start), 0)
+    }))
+    .filter(t => t.ms > 0)
+    .sort((a, b) => b.ms - a.ms);
+}
+
+function deleteTaskDay(taskId, dateStr) {
+  const task = data.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.sessions = task.sessions.filter(s =>
+    new Date(s.start).toISOString().slice(0, 10) !== dateStr
+  );
+  persist();
+  render();
+}
+
+function renderHistory() {
+  const days = weekPastDays().filter(d => dayTotalMs(d) > 0);
+  if (days.length === 0) { historyEl.innerHTML = ''; return; }
+
+  historyEl.innerHTML = days.map(dateStr => {
+    const isExp  = expandedDays.has(dateStr);
+    const total  = dayTotalMs(dateStr);
+    const d      = new Date(dateStr + 'T12:00:00');
+    const name   = d.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    const date   = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase();
+    const tasks  = isExp ? tasksForDay(dateStr) : [];
+
+    return `
+      <div class="day-row" data-date="${dateStr}">
+        <span class="day-chevron">${isExp ? '▲' : '▶'}</span>
+        <span class="day-label"><span class="day-name">${name}</span> <span class="day-date">${date}</span></span>
+        <span class="day-total">${fmt(total)}</span>
+      </div>
+      ${isExp ? `<div class="day-tasks">${
+        tasks.map(t => `
+          <div class="day-task-row" data-task-id="${t.id}" data-date="${dateStr}">
+            <span class="dt-name">${esc(t.name)}</span>
+            <span class="dt-time">${fmt(t.ms)}</span>
+            <button class="dt-del" tabindex="-1">✕</button>
+          </div>`).join('')
+      }</div>` : ''}
+    `;
+  }).join('');
+}
+
+historyEl.addEventListener('click', e => {
+  const dtDel = e.target.closest('.dt-del');
+  if (dtDel) {
+    const taskRow = dtDel.closest('.day-task-row');
+    deleteTaskDay(taskRow.dataset.taskId, taskRow.dataset.date);
+    return;
+  }
+
+  const row = e.target.closest('.day-row');
+  if (!row) return;
+  const date = row.dataset.date;
+  expandedDays.has(date) ? expandedDays.delete(date) : expandedDays.add(date);
+  renderHistory();
+});
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
@@ -311,6 +405,7 @@ function render() {
   totalRow.style.display = hasData ? 'flex' : 'none';
   totalTime.textContent  = fmt(allTodayMs());
 
+  renderHistory();
   ensureTick();
 }
 
