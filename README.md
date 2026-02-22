@@ -86,6 +86,22 @@ You can also click any task row to start/stop it, and hover to reveal the `✕` 
 
 Only one task runs at a time — starting a new one automatically stops the current one.
 
+## Seed data
+
+`seed.py` populates a user's tasks with two weeks of realistic sessions — useful for testing the history view without waiting for real usage to accumulate.
+
+```bash
+python3 seed.py --email you@example.com
+```
+
+It reads `DATABASE_URL` from `.env` by default. To target a different database:
+
+```bash
+python3 seed.py --email you@example.com --db postgresql://localhost/tt
+```
+
+It generates sessions across the last 10 weekdays for five built-in tasks (`deep work`, `email & slack`, `code review`, `meetings`, `planning`) and also adds historical sessions to any existing tasks already in the account (`React Query`, `Interview Prep`). Safe to re-run — it never removes existing tasks or sessions, only adds new ones.
+
 ## Data
 
 All task data is stored per-user in a Postgres database. Locally this is the `tt` database on your Postgres.app instance. In production it's the Fly.io Postgres cluster attached to the app.
@@ -95,6 +111,8 @@ All task data is stored per-user in a Postgres database. Locally this is the `tt
 ```
 index.html            — the app UI
 app.py                — FastAPI server (auth, data API, static files)
+server.py             — simple local server (no auth, reads/writes data.json)
+seed.py               — populates data.json with two weeks of sample sessions
 requirements.txt      — Python dependencies
 requirements-dev.txt  — dev/test dependencies (pytest, httpx)
 .env.example          — environment variable template (copy to .env for local dev)
