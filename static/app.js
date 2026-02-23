@@ -44,6 +44,46 @@ function persist() {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 let authMode = 'login';
+let googleClientId = null;
+let googleButtonRendered = false;
+
+async function loadGoogleAuth() {
+  try {
+    const r = await fetch('/auth/google/client-id');
+    const { client_id } = await r.json();
+    if (!client_id) return;
+    googleClientId = client_id;
+    initGoogleButton();
+  } catch {}
+}
+
+function initGoogleButton() {
+  if (!googleClientId || !window.google?.accounts?.id || googleButtonRendered) return;
+  const container = document.getElementById('google-btn');
+  const width = Math.min(container.offsetWidth || 400, 400);
+  google.accounts.id.initialize({ client_id: googleClientId, callback: handleGoogleCredential });
+  google.accounts.id.renderButton(container, { theme: 'outline', size: 'large', width });
+  googleButtonRendered = true;
+}
+
+async function handleGoogleCredential(response) {
+  const errorEl = document.getElementById('auth-error');
+  errorEl.textContent = '';
+  try {
+    const r = await fetch('/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const body = await r.json();
+    if (!r.ok) { errorEl.textContent = body.detail || 'error'; return; }
+    localStorage.setItem('tt_token', body.token);
+    data = { tasks: [] };
+    await load();
+  } catch {
+    errorEl.textContent = 'network error';
+  }
+}
 
 function showLoginView() {
   document.getElementById('auth-login-view').style.display = 'block';
@@ -51,6 +91,7 @@ function showLoginView() {
   document.getElementById('auth-reset-view').style.display = 'none';
   document.getElementById('auth-error').textContent = '';
   document.getElementById('auth-email').focus();
+  initGoogleButton(); // no-op if already rendered or GIS not yet loaded
 }
 
 function showForgotView() {
@@ -703,4 +744,6 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+window.onGoogleLibraryLoad = initGoogleButton; // fires when GIS script finishes loading
+loadGoogleAuth();                               // fetches client_id from backend
 load();

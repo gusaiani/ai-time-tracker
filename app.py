@@ -27,6 +27,7 @@ RESEND_API_KEY       = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM          = os.getenv("RESEND_FROM", "noreply@tikkit.fly.dev")
 APP_URL              = os.getenv("APP_URL", "https://tikkit.fly.dev")
 RESET_EXPIRE_MINUTES = 60
+GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID", "")
 
 bearer = HTTPBearer()
 
@@ -52,10 +53,11 @@ def init_db():
                         CREATE TABLE IF NOT EXISTS users (
                             id            SERIAL PRIMARY KEY,
                             email         TEXT UNIQUE NOT NULL,
-                            password_hash TEXT NOT NULL,
+                            password_hash TEXT,
                             created_at    TIMESTAMPTZ DEFAULT NOW()
                         )
                     """)
+                    cur.execute("ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL")
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS user_data (
                             user_id    INTEGER PRIMARY KEY REFERENCES users(id),
@@ -115,6 +117,10 @@ class AuthRequest(BaseModel):
     password: str
 
 
+class GoogleAuthRequest(BaseModel):
+    credential: str
+
+
 class ForgotPasswordRequest(BaseModel):
     email: str
 
@@ -122,6 +128,32 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str
+
+
+@app.get("/auth/google/client-id")
+def google_client_id_endpoint():
+    return {"client_id": GOOGLE_CLIENT_ID}
+
+
+@app.post("/auth/google")
+def google_auth(req: GoogleAuthRequest, db=Depends(get_db)):
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as grequests
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=501, detail="Google auth not configured")
+    try:
+        idinfo = id_token.verify_oauth2_token(req.credential, grequests.Request(), GOOGLE_CLIENT_ID)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+    email = idinfo["email"]
+    db.execute("SELECT id FROM users WHERE email = %s", (email,))
+    row = db.fetchone()
+    if row:
+        user_id = row["id"]
+    else:
+        db.execute("INSERT INTO users (email, password_hash) VALUES (%s, NULL) RETURNING id", (email,))
+        user_id = db.fetchone()["id"]
+    return {"token": make_token(user_id)}
 
 
 @app.post("/auth/signup")
