@@ -64,13 +64,54 @@ fly postgres attach tt-<yourname>-db
 fly secrets set SECRET_KEY="$(openssl rand -hex 32)"
 ```
 
-**3. Deploy**
+**3a. (Optional) Enable password reset emails**
+
+The app uses [Resend](https://resend.com) for transactional email. Without these secrets the forgot-password flow silently skips sending — everything else works normally.
+
+```bash
+fly secrets set RESEND_API_KEY="re_..."
+fly secrets set RESEND_FROM="noreply@yourdomain.com"
+fly secrets set APP_URL="https://tt-<yourname>.fly.dev"
+```
+
+`RESEND_FROM` must be an address on a domain you have verified in the Resend dashboard.
+
+**4. Deploy**
 
 ```bash
 fly deploy
 ```
 
 The app will be available at `https://tt-<yourname>.fly.dev`. Redeploy after code changes with `fly deploy`.
+
+## Password reset
+
+The app has a built-in forgot-password flow using [Resend](https://resend.com) as the email provider.
+
+**How it works**
+
+1. User clicks "forgot password?" on the sign-in screen and submits their email.
+2. If the email matches an account, a signed one-time token is stored in `password_reset_tokens` (expires in 60 minutes) and an email is sent with a link like `https://yourdomain.com/?token=<token>`.
+3. Opening that link shows a "set new password" form. On submit the token is marked used and the password hash is updated.
+4. The response is always `{"ok": true}` regardless of whether the email exists, to avoid leaking account information.
+
+**Environment variables**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RESEND_API_KEY` | *(empty)* | API key from [resend.com](https://resend.com). If empty, emails are skipped silently. |
+| `RESEND_FROM` | `noreply@tikkit.fly.dev` | Sender address — must be on a domain verified in Resend. |
+| `APP_URL` | `https://tikkit.fly.dev` | Base URL prepended to the reset link in emails. Set to `http://localhost:8000` for local testing. |
+
+**Local testing without email**
+
+Leave `RESEND_API_KEY` unset. After submitting the forgot-password form, grab the token directly from the database:
+
+```sql
+SELECT token FROM password_reset_tokens ORDER BY expires_at DESC LIMIT 1;
+```
+
+Then open `http://localhost:8000/?token=<token>` manually to reach the reset form.
 
 ## Usage
 
