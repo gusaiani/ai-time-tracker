@@ -321,7 +321,7 @@ function armPomodoroTimer(taskName, sessionStart) {
     pomodoroBtn.addEventListener('animationend', () => pomodoroBtn.classList.remove('ringing'), { once: true });
     // Browser notification
     if (Notification.permission === 'granted') {
-      new Notification('Tikkit — pomodoro done 🍅', { body: `Time to stop "${taskName}" and take a break.` });
+      new Notification('Tkdoro — pomodoro done 🍅', { body: `Time to stop "${taskName}" and take a break.` });
     }
   }, remaining);
 }
@@ -440,10 +440,10 @@ function fmtTabTimer(ms) {
 
 function updateTabTitle() {
   const cur = runningTask();
-  if (!cur) { document.title = 'Tikkit'; return; }
+  if (!cur) { document.title = 'Tkdoro'; return; }
   const session = cur.sessions.find(s => !s.end);
-  if (!session) { document.title = 'Tikkit'; return; }
-  document.title = `${fmtTabTimer(Date.now() - session.start)} · ${cur.name} · Tikkit`;
+  if (!session) { document.title = 'Tkdoro'; return; }
+  document.title = `${fmtTabTimer(Date.now() - session.start)} · ${cur.name} · Tkdoro`;
 }
 
 function liveUpdate() {

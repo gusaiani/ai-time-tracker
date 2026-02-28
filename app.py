@@ -24,8 +24,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/tt")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 30
 RESEND_API_KEY       = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM          = os.getenv("RESEND_FROM", "noreply@tikkit.fly.dev")
-APP_URL              = os.getenv("APP_URL", "https://tikkit.fly.dev")
+RESEND_FROM          = os.getenv("RESEND_FROM", "noreply@tkdoro.live")
+APP_URL              = os.getenv("APP_URL", "https://tkdoro.live")
 RESET_EXPIRE_MINUTES = 60
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID", "")
 
@@ -198,8 +198,8 @@ async def forgot_password(req: ForgotPasswordRequest, db=Depends(get_db)):
                 json={
                     "from": RESEND_FROM,
                     "to": [req.email],
-                    "subject": "Reset your Tikkit password",
-                    "html": f"<p>Reset your Tikkit password (expires in 1 hour):</p><p><a href='{reset_url}'>{reset_url}</a></p><p>If you didn't request this, ignore this email.</p>",
+                    "subject": "Reset your Tkdoro password",
+                    "html": f"<p>Reset your Tkdoro password (expires in 1 hour):</p><p><a href='{reset_url}'>{reset_url}</a></p><p>If you didn't request this, ignore this email.</p>",
                 },
             )
     return {"ok": True}
