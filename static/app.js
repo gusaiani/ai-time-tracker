@@ -138,11 +138,13 @@ function showResetView() {
 }
 
 function showGuestMode() {
+  document.getElementById('guest-banner').style.display = 'block';
   document.getElementById('hd-signin').style.display = '';
   document.getElementById('hd-logout').style.display = 'none';
 }
 
 function showUserMode() {
+  document.getElementById('guest-banner').style.display = 'none';
   document.getElementById('hd-signin').style.display = 'none';
   document.getElementById('hd-logout').style.display = '';
 }
@@ -169,6 +171,10 @@ window.addEventListener('popstate', () => {
 
 document.getElementById('hd-signin').addEventListener('click', () => {
   authMode = 'login'; showLoginView(); showAuth();
+});
+
+document.getElementById('guest-signup-btn').addEventListener('click', () => {
+  authMode = 'signup'; showLoginView(); showAuth();
 });
 
 document.getElementById('auth-toggle').addEventListener('click', () => {

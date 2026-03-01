@@ -121,6 +121,26 @@ body {
 
 #google-btn { display: flex; justify-content: center; }
 
+/* ── Guest banner ── */
+#guest-banner {
+  font-size: 12px;
+  color: var(--dim);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  margin-bottom: 20px;
+}
+
+#guest-banner button {
+  background: none;
+  border: none;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
 /* ── App ── */
 #app {
   width: 100%;
